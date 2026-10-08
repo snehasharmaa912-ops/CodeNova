@@ -42,4 +42,4 @@ Live link once GitHub Pages is on: `https://YOUR-USERNAME.github.io/CodeNova/pro
 
 ## Contact
 
-sharmasnehaa08@gmail.com
+snehasharmaa912@gmail.com
