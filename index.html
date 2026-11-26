@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sahayak - clickable prototype | CodeNova</title>
+<style>
+  :root{
+    --ink:#15202B; --muted:#4A5B6C; --line:#CBD5DF; --surface:#EEF2F6; --page:#DDE4EB;
+    --brand:#1D4E89; --brand-dark:#143A68; --ok:#2A7A4B; --warn:#8A5200; --bad:#B3261E;
+  }
+  body.hc{--ink:#000; --muted:#1B1B1B; --line:#000; --surface:#fff; --page:#fff; --brand:#0A2B57; --brand-dark:#000; --ok:#145A32; --warn:#5C3700}
+  body.hc .app{border:2px solid #000}
+  body.hc textarea,body.hc select,body.hc .opt,body.hc .card{border-width:2px}
+  *{box-sizing:border-box}
+  html{font-size:18px}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:"Noto Sans Devanagari","Mukta",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+  .app{max-width:420px;min-height:100vh;margin:0 auto;background:#fff;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+  header strong{font-size:1.1rem}
+  .lang{display:flex;border:1.5px solid var(--brand);border-radius:8px;overflow:hidden}
+  .lang button{border:0;background:#fff;color:var(--brand);font:inherit;font-size:.85rem;padding:6px 12px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--brand);color:#fff}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid var(--line)}
+  .chip{border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:8px;font:inherit;font-size:.8rem;padding:4px 10px;cursor:pointer}
+  .chip[aria-pressed="true"]{background:var(--brand);color:#fff}
+  .note{margin:0;padding:8px 20px;background:var(--surface);font-size:.8rem;color:var(--muted)}
+  .net{margin:0;padding:8px 20px;background:var(--warn);color:#fff;font-size:.85rem;font-weight:600}
+  .net[hidden]{display:none}
+  main{flex:1;padding:24px 20px 32px}
+  section[hidden]{display:none}
+  .step{margin:0 0 4px;font-size:.85rem;color:var(--muted)}
+  h1{font-size:1.6rem;line-height:1.25;margin:0 0 8px}
+  p.lead{margin:0 0 20px;color:var(--muted)}
+  button,select,textarea,input{font:inherit}
+  :focus-visible{outline:3px solid #F2A33A;outline-offset:2px}
+  .mic{display:block;margin:8px auto 4px;width:120px;height:120px;border-radius:50%;border:0;background:var(--brand);color:#fff;cursor:pointer;position:relative}
+  .mic svg{width:48px;height:48px;fill:#fff}
+  .mic.on{background:var(--bad)}
+  .mic.on::after{content:"";position:absolute;inset:-10px;border-radius:50%;border:3px solid var(--bad);animation:ring 1.2s ease-out infinite}
+  @keyframes ring{from{opacity:.9;transform:scale(.9)}to{opacity:0;transform:scale(1.2)}}
+  @media (prefers-reduced-motion:reduce){.mic.on::after{animation:none}}
+  .mic-label{text-align:center;font-weight:600;margin:0}
+  .status{text-align:center;min-height:1.6em;color:var(--muted);font-size:.9rem;margin:4px 0 16px}
+  label{display:block;font-weight:600;margin:16px 0 6px}
+  textarea,select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px;background:#fff;color:var(--ink)}
+  textarea{min-height:104px;resize:vertical}
+  .hint{font-size:.8rem;color:var(--muted);margin:4px 0 0}
+  .draft{font-size:.8rem;color:var(--ok);margin:4px 0 0;min-height:1.2em}
+  .tools{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .row{display:flex;gap:10px;margin-top:20px}
+  .btn{flex:1;border-radius:10px;padding:14px 16px;border:1.5px solid var(--brand);background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--brand-dark)}
+  .btn.secondary{background:#fff;color:var(--brand)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  a.btn{display:block;text-align:center;text-decoration:none}
+  .link{background:none;border:0;color:var(--brand);text-decoration:underline;cursor:pointer;padding:6px 0;font-size:.9rem}
+  .attach{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .attach .btn{flex:none;padding:10px 14px}
+  .ok{color:var(--ok);font-weight:600;font-size:.9rem}
+  .ref{display:inline-block;background:var(--surface);border-radius:8px;padding:4px 10px;font-weight:600;letter-spacing:.5px}
+  ol.timeline{list-style:none;margin:20px 0 0;padding:0}
+  ol.timeline li{position:relative;padding:0 0 22px 36px;color:var(--muted)}
+  ol.timeline li::before{content:"";position:absolute;left:5px;top:6px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--line)}
+  ol.timeline li::after{content:"";position:absolute;left:11px;top:22px;bottom:-2px;width:2px;background:var(--line)}
+  ol.timeline li:last-child::after{display:none}
+  ol.timeline li.done{color:var(--ink)}
+  ol.timeline li.done::before{background:var(--ok);border-color:var(--ok)}
+  ol.timeline li.now{color:var(--ink);font-weight:600}
+  ol.timeline li.now::before{background:#F2A33A;border-color:#F2A33A}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:380px;width:calc(100% - 32px);background:var(--ink);color:#fff;border-radius:10px;padding:12px 16px;font-size:.9rem;z-index:5}
+  .toast[hidden]{display:none}
+  .summary{background:var(--surface);border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px}
+  .summary p{margin:2px 0}
+  .pend{background:#FFF4E0;border:1.5px solid #F2A33A;border-radius:10px;padding:12px 14px;margin:0 0 4px;font-size:.9rem;color:#000}
+  .pend[hidden]{display:none}
+  .opt{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:10px;padding:14px;margin:0 0 10px;cursor:pointer}
+  .opt:hover,.opt[aria-pressed="true"]{border-color:var(--brand);background:var(--surface)}
+  .result{background:var(--surface);border-radius:10px;padding:14px;margin-top:6px}
+  .result p{margin:0 0 12px;font-weight:600}
+  .card{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:.9rem}
+  .card p{margin:2px 0}
+  .card .uh{font-size:.8rem;color:var(--muted);font-weight:600}
+  .badge{display:inline-block;font-size:.75rem;font-weight:600;border-radius:6px;padding:1px 8px;background:#fff;border:1.5px solid var(--line);margin-left:6px}
+  .badge.high{border-color:var(--ok);color:var(--ok)}
+  .badge.med{border-color:var(--warn);color:var(--warn)}
+  .badge.low{border-color:var(--bad);color:var(--bad)}
+  .urg{background:#FDECEA;border-radius:8px;padding:8px 10px;color:#7A1510;font-weight:600;margin-top:8px!important}
+  .why{color:var(--muted)}
+  .dup{background:#EAF4EE;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:.85rem;color:#12361F}
+  .dup[hidden]{display:none}
+  .wa{background:#DCF8C6;color:#0B2A12;border-radius:12px 12px 12px 2px;padding:10px 12px;font-size:.9rem;margin-top:6px}
+  .wa small{display:block;color:#35563C;margin-bottom:2px}
+  .oc{border:1.5px solid var(--line);border-radius:10px;padding:12px;margin:0 0 10px}
+  .oc .top{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;color:var(--muted)}
+  .oc p{margin:4px 0}
+  .flags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  .flag{font-size:.75rem;font-weight:600;border-radius:6px;padding:1px 8px;background:var(--surface);border:1.5px solid var(--line)}
+  .flag.u{background:#FDECEA;border-color:var(--bad);color:#7A1510}
+  .oc .btn{flex:none;padding:8px 12px;font-size:.85rem}
+  a.link{display:inline-block}
+  input.ti{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px;background:#fff;color:var(--ink)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+  .drow{display:grid;grid-template-columns:1fr 90px 24px;gap:8px;align-items:center;font-size:.8rem;margin:4px 0}
+  .dbar{background:var(--surface);border-radius:6px;height:10px;overflow:hidden}
+  .dbar i{display:block;height:100%;background:var(--brand)}
+  .priv p{margin:0 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <strong>Sahayak</strong>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="lang-hi" aria-pressed="true">हिन्दी</button>
+      <button id="lang-en" aria-pressed="false">English</button>
+    </div>
+  </header>
+  <div class="bar">
+    <button class="chip" id="size" aria-label="Larger text">A+</button>
+    <button class="chip" id="hc" aria-pressed="false" data-i18n="contrast"></button>
+    <button class="chip" id="trackBtn" data-i18n="track"></button>
+    <button class="chip" id="privBtn" data-i18n="privacy"></button>
+    <button class="chip" id="offBtn" data-i18n="officer"></button>
+  </div>
+  <p class="net" id="net" role="status" hidden></p>
+  <p class="note"><span data-i18n="note"></span> <button class="link" id="sim"></button></p>
+
+  <main>
+    <!-- 1: describe -->
+    <section id="s1">
+      <p class="step" data-i18n="step1"></p>
+      <h1 data-i18n="h1"></h1>
+      <p class="lead" data-i18n="lead1"></p>
+      <button class="mic" id="mic" aria-label="Speak your problem">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a4 4 0 0 0 4-4V6a4 4 0 0 0-8 0v5a4 4 0 0 0 4 4zm6-4a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.94V22h2v-3.06A8 8 0 0 0 20 11h-2z"/></svg>
+      </button>
+      <p class="mic-label" data-i18n="speak"></p>
+      <p class="status" id="status" aria-live="polite"></p>
+      <label for="problem" data-i18n="orType"></label>
+      <textarea id="problem"></textarea>
+      <p class="draft" id="draft" aria-live="polite"></p>
+      <div class="tools">
+        <button class="link" id="example" data-i18n="example"></button>
+        <button class="link" id="helper" data-i18n="helper"></button>
+      </div>
+      <div class="row"><button class="btn" id="go2" disabled data-i18n="continue"></button></div>
+    </section>
+
+    <!-- 2: review -->
+    <section id="s2" hidden>
+      <p class="step" data-i18n="step2"></p>
+      <h1 data-i18n="h2"></h1>
+      <p class="lead" data-i18n="lead2"></p>
+      <label for="problem2" data-i18n="fProblem"></label>
+      <textarea id="problem2"></textarea>
+      <button class="link" id="speak" data-i18n="readAloud" hidden></button>
+      <div class="card" id="understood"></div>
+      <div class="card" id="ask" hidden></div>
+      <label for="dept" data-i18n="fDept"></label>
+      <select id="dept"></select>
+      <p class="hint" data-i18n="deptHint"></p>
+      <label data-i18n="fLoc"></label>
+      <div class="attach"><button class="btn secondary" id="loc" data-i18n="addLoc"></button><span class="ok" id="locOk"></span></div>
+      <p class="dup" id="dup" hidden></p>
+      <label data-i18n="fPhoto"></label>
+      <div class="attach">
+        <input type="file" id="photo" accept="image/*" hidden>
+        <button class="btn secondary" id="photoBtn" data-i18n="addPhoto"></button><span class="ok" id="photoOk"></span>
+      </div>
+      <div class="row">
+        <button class="btn secondary" id="back1" data-i18n="back"></button>
+        <button class="btn" id="submit" data-i18n="submit"></button>
+      </div>
+    </section>
+
+    <!-- 3: track -->
+    <section id="s3" hidden>
+      <p class="step" data-i18n="step3"></p>
+      <h1 id="h3"></h1>
+      <p class="lead" id="refLine"><span data-i18n="refLabel"></span> <span class="ref" id="ref"></span></p>
+      <p class="pend" id="pend" hidden></p>
+      <div class="summary" id="summary"></div>
+      <ol class="timeline" id="timeline" aria-label="Complaint progress"></ol>
+      <div id="alertBox" hidden>
+        <p class="hint" data-i18n="alertTitle"></p>
+        <div class="wa"><small id="alertCh"></small><span id="alertMsg"></span></div>
+      </div>
+      <a class="link" id="wa" target="_blank" rel="noopener" hidden></a>
+      <div class="row">
+        <button class="btn secondary" id="again" data-i18n="again"></button>
+        <button class="btn" id="next" data-i18n="next"></button>
+      </div>
+    </section>
+
+    <!-- 4: which service do I need? -->
+    <section id="s4" hidden>
+      <h1 data-i18n="h4"></h1>
+      <p class="lead" data-i18n="lead4"></p>
+      <div id="opts"></div>
+      <div class="result" id="svcResult" hidden></div>
+      <p class="hint" data-i18n="helperNote"></p>
+      <div class="row"><button class="btn secondary" id="back4" data-i18n="back"></button></div>
+    </section>
+
+    <!-- 5: officer view -->
+    <section id="s5" hidden>
+      <h1 data-i18n="officerH"></h1>
+      <p class="lead" data-i18n="officerLead"></p>
+      <p class="hint" id="officerSum"></p>
+      <div id="deptBars"></div>
+      <div id="officerList"></div>
+      <div class="row"><button class="btn secondary" id="back5" data-i18n="back"></button></div>
+    </section>
+
+    <!-- 6: track a complaint -->
+    <section id="s6" hidden>
+      <h1 data-i18n="trackH"></h1>
+      <p class="lead" data-i18n="trackLead"></p>
+      <label for="trackIn" data-i18n="refLabel"></label>
+      <input id="trackIn" class="ti" autocomplete="off" placeholder="CM-123456">
+      <div class="row"><button class="btn" id="trackGo" data-i18n="trackGo"></button></div>
+      <p class="hint" id="trackMsg" aria-live="polite"></p>
+      <label data-i18n="myList"></label>
+      <div id="myList"></div>
+      <div class="row"><button class="btn secondary" id="back6" data-i18n="back"></button></div>
+    </section>
+
+    <!-- 7: privacy -->
+    <section id="s7" hidden>
+      <h1 data-i18n="privH"></h1>
+      <div class="priv" id="privList"></div>
+      <p class="ok" id="privMsg" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn secondary" id="back7" data-i18n="back"></button>
+        <button class="btn" id="privDel" data-i18n="privDel"></button>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const T = {
+  hi: {
+    note:"प्रोटोटाइप: कुछ भी CM हेल्पलाइन को नहीं भेजा जाता।",
+    step1:"चरण 1 / 3", step2:"चरण 2 / 3", step3:"चरण 3 / 3",
+    h1:"बताइए, क्या दिक्कत है?", lead1:"अपनी भाषा में बोलिए। फ़ॉर्म हम भर देंगे।",
+    speak:"अपनी समस्या बोलिए", orType:"या यहाँ लिखिए", example:"उदाहरण भरें", continue:"आगे बढ़ें",
+    listening:"सुन रहे हैं... बोलिए", heard:"सुन लिया। नीचे जाँच लीजिए।", noVoice:"इस ब्राउज़र में आवाज़ काम नहीं करती। कृपया लिखिए।", voiceErr:"आवाज़ सुनाई नहीं दी। दोबारा कोशिश कीजिए या लिखिए।",
+    h2:"शिकायत जाँच लीजिए", lead2:"हमने विभाग सुझाया है। ज़रूरत हो तो बदलिए।",
+    fProblem:"समस्या", fDept:"विभाग", deptHint:"आपकी बात के आधार पर सुझाया गया। उदाहरण विभाग।", fLoc:"स्थान", addLoc:"मेरा स्थान जोड़ें", locDone:"स्थान जुड़ गया", locSample:"देहरादून (नमूना स्थान)",
+    fPhoto:"फ़ोटो", addPhoto:"फ़ोटो जोड़ें", back:"वापस", submit:"शिकायत दर्ज करें",
+    h3:"शिकायत दर्ज हो गई", refLabel:"संदर्भ संख्या:", again:"नई शिकायत", next:"अगला अपडेट दिखाएँ", resolved:"शिकायत का समाधान हो गया",
+    stages:["शिकायत मिली","विभाग को भेजी गई","काम शुरू हुआ","समाधान हुआ"],
+    sms:(r,s)=>`अलर्ट: आपकी शिकायत ${r} अब: ${s}`,
+    depts:{street:"स्ट्रीट लाइट और बिजली",water:"पेयजल",roads:"सड़क और पुल",waste:"सफ़ाई और कूड़ा",other:"अन्य"},
+    sLoc:"स्थान", sPhoto:"फ़ोटो", yes:"जुड़ी है", no:"नहीं",
+    netOff:"सिग्नल नहीं है। आपकी जानकारी इस फ़ोन में सुरक्षित है।", simOn:"कमज़ोर सिग्नल दिखाएँ", simOff:"सिग्नल वापस लाएँ",
+    draftSaved:"ड्राफ़्ट इस फ़ोन में सुरक्षित है।", draftBack:"आपका पिछला ड्राफ़्ट वापस आ गया।",
+    pendingH:"फ़ोन में सुरक्षित है", pendingLead:"सिग्नल आते ही आपकी शिकायत अपने आप भेज दी जाएगी। कुछ दोबारा लिखना नहीं पड़ेगा।", waiting:"सिग्नल का इंतज़ार", sentToast:"सिग्नल मिल गया। शिकायत भेज दी गई।",
+    helper:"कौन-सी सेवा चाहिए?", h4:"आपको कौन-सी सेवा चाहिए?", lead4:"अपनी ज़रूरत चुनिए। हम सही जगह बताएँगे।",
+    opts:{cert:"प्रमाण पत्र (निवास, आय, जाति, जन्म, मृत्यु)",land:"भूमि या संपत्ति रिकॉर्ड",pension:"पेंशन या कल्याण योजना",licence:"व्यापार या दुकान का लाइसेंस",broken:"कुछ खराब है या काम नहीं कर रहा (बिजली, पानी, सड़क, सफ़ाई)"},
+    svc:"यह अपनी सरकार की सेवा है। वहाँ आवेदन कीजिए।", openSvc:"अपनी सरकार खोलें", cmpl:"यह शिकायत है। Sahayak से अभी दर्ज कीजिए।", fileNow:"शिकायत दर्ज करें",
+    helperNote:"उदाहरण सूची। पूरे संस्करण में सभी सेवाएँ जुड़ेंगी।",
+    contrast:"ज़्यादा कंट्रास्ट", officer:"अधिकारी दृश्य (डेमो)", readAloud:"सुनिए",
+    understood:"हमने यह समझा", conf:"भरोसा:", confs:{high:"ज़्यादा",med:"ठीक-ठाक",low:"कम"}, byYou:"आपने चुना",
+    because:"आपके शब्दों से:", dur:"कब से:", urgent:"जल्दी वाला मामला।", urgentNote:"जान का ख़तरा हो तो अभी 112 पर कॉल करें।",
+    dup:n=>`आपके इलाके से इस महीने ऐसी ${n} शिकायतें आई हैं। आपकी शिकायत उनसे जोड़ी जाएगी। (नमूना आँकड़ा)`,
+    alertTitle:"नागरिक को ऐसा अलर्ट मिलता है", alertMsg:(r,s)=>`Sahayak: आपकी शिकायत ${r} अब: ${s}`,
+    officerH:"अधिकारी स्क्रीन (डेमो)", officerLead:"शिकायतें साफ़ और विभाग के हिसाब से आती हैं। स्थिति बदलते ही नागरिक को अलर्ट जाता है।",
+    noneYet:"अभी आपकी कोई शिकायत नहीं है। नीचे सिर्फ़ नमूने हैं।", advance:"अगली स्थिति", finished:"पूरा", sample:"नमूना",
+    flagUrgent:"जल्दी", flagPhoto:"फ़ोटो", flagGps:"स्थान", flagDup:n=>`${n} मिलती-जुलती`,
+    sum:(n,u)=>`${n} शिकायतें · ${u} जल्दी वाली`,
+    privacy:"गोपनीयता", track:"शिकायत ढूँढें",
+    photoSaved:(a,b)=>`फ़ोटो छोटी की गई: ${a} से ${b} (डेटा की बचत)`,
+    askTitle:"कुछ बातें और बताइए", askLoc:"यह कहाँ की बात है? स्थान जोड़ें या गाँव/वार्ड का नाम लिखिए।", askWhen:"कब से?", whenOpts:["आज से","इस हफ्ते से","एक महीने से ज़्यादा"],
+    shareWa:"WhatsApp पर स्थिति भेजें", waMsg:(r,s)=>`शिकायत ${r} की स्थिति: ${s} (Sahayak)`,
+    trackH:"शिकायत की स्थिति देखें", trackLead:"संदर्भ संख्या डालिए या नीचे से चुनिए।", trackGo:"देखें",
+    notFound:"इस फ़ोन पर यह संख्या नहीं मिली। पूरे संस्करण में किसी भी फ़ोन से देख सकेंगे।", myList:"इस फ़ोन की शिकायतें", noMine:"अभी कोई शिकायत नहीं।",
+    privH:"आपका डेटा",
+    privLines:["हम सिर्फ़ शिकायत का लिखा पाठ, स्थान और वैकल्पिक फ़ोटो रखते हैं।","पूरे संस्करण में आवाज़ की रिकॉर्डिंग सेव नहीं होगी, सिर्फ़ लिखा पाठ।","प्रोटोटाइप में आपके ब्राउज़र की आवाज़ सेवा आवाज़ को प्रोसेस कर सकती है।","अभी सारा डेटा इसी फ़ोन में है। आप कभी भी हटा सकते हैं।"],
+    privDel:"मेरा डेटा इस फ़ोन से हटाएँ", privDone:"डेटा हटा दिया गया।",
+    byDept:"विभाग के हिसाब से"
+  },
+  en: {
+    note:"Prototype: nothing is sent to CM Helpline.",
+    step1:"Step 1 of 3", step2:"Step 2 of 3", step3:"Step 3 of 3",
+    h1:"Tell us what's wrong", lead1:"Speak in your own language. We'll fill in the form.",
+    speak:"Speak your problem", orType:"Or type it here", example:"Fill an example", continue:"Continue",
+    listening:"Listening... go ahead", heard:"Got it. Check the text below.", noVoice:"Voice isn't available in this browser. Please type instead.", voiceErr:"Couldn't hear you. Try again or type instead.",
+    h2:"Check your complaint", lead2:"We suggested a department. Change it if needed.",
+    fProblem:"Problem", fDept:"Department", deptHint:"Suggested from what you said. Example departments.", fLoc:"Location", addLoc:"Add my location", locDone:"Location added", locSample:"Dehradun (sample location)",
+    fPhoto:"Photo", addPhoto:"Add a photo", back:"Back", submit:"Submit complaint",
+    h3:"Complaint submitted", refLabel:"Reference number:", again:"File another complaint", next:"Show next update", resolved:"Complaint resolved",
+    stages:["Received","Sent to department","Work started","Resolved"],
+    sms:(r,s)=>`Alert: Your complaint ${r} is now: ${s}`,
+    depts:{street:"Street lights and electricity",water:"Drinking water",roads:"Roads and bridges",waste:"Sanitation and waste",other:"Other"},
+    sLoc:"Location", sPhoto:"Photo", yes:"added", no:"none",
+    netOff:"No signal. Your details are safe on this phone.", simOn:"Simulate weak signal", simOff:"Back to normal signal",
+    draftSaved:"Draft saved on this phone.", draftBack:"Your earlier draft is back.",
+    pendingH:"Saved on your phone", pendingLead:"Your complaint will be sent automatically when signal returns. Nothing needs to be typed again.", waiting:"Waiting for signal", sentToast:"Signal is back. Complaint sent.",
+    helper:"Which service do I need?", h4:"Which service do you need?", lead4:"Pick what you need. We'll point you to the right place.",
+    opts:{cert:"A certificate (domicile, income, caste, birth, death)",land:"Land or property records",pension:"Pension or a welfare scheme",licence:"A trade or shop licence",broken:"Something is broken or not working (light, water, road, waste)"},
+    svc:"This is an Apuni Sarkar service. Apply there.", openSvc:"Open Apuni Sarkar", cmpl:"This is a complaint. File it with Sahayak now.", fileNow:"File a complaint",
+    helperNote:"Example list. The full version covers every service.",
+    contrast:"High contrast", officer:"Officer view (demo)", readAloud:"Read aloud",
+    understood:"What we understood", conf:"Confidence:", confs:{high:"High",med:"Medium",low:"Low"}, byYou:"Chosen by you",
+    because:"From your words:", dur:"Since:", urgent:"Marked urgent.", urgentNote:"If someone is in danger, call 112 now.",
+    dup:n=>`${n} similar complaints came from your area this month. Yours will be linked to them. (sample figure)`,
+    alertTitle:"The citizen gets an alert like this", alertMsg:(r,s)=>`Sahayak: Your complaint ${r} is now: ${s}`,
+    officerH:"Officer screen (demo)", officerLead:"Complaints arrive clean and sorted by department. Changing a status alerts the citizen.",
+    noneYet:"You haven't filed a complaint yet. Only samples are shown below.", advance:"Move to next stage", finished:"Done", sample:"Sample",
+    flagUrgent:"Urgent", flagPhoto:"Photo", flagGps:"Location", flagDup:n=>`${n} similar`,
+    sum:(n,u)=>`${n} complaints · ${u} urgent`,
+    privacy:"Privacy", track:"Track a complaint",
+    photoSaved:(a,b)=>`Photo reduced from ${a} to ${b} (saves data)`,
+    askTitle:"A few more details", askLoc:"Where is this? Add your location or type the village or ward.", askWhen:"Since when?", whenOpts:["Since today","Since this week","Over a month"],
+    shareWa:"Share status on WhatsApp", waMsg:(r,s)=>`Complaint ${r} status: ${s} (Sahayak)`,
+    trackH:"Check complaint status", trackLead:"Enter a reference number or pick one below.", trackGo:"Check",
+    notFound:"This number isn't on this phone. In the full version, any phone can check a reference number.", myList:"Complaints on this phone", noMine:"No complaints yet.",
+    privH:"Your data",
+    privLines:["We keep only the complaint text, the location and an optional photo.","In the full version, voice recordings are not saved, only the text.","In this prototype, your browser's speech service may process the audio.","For now, all data stays on this phone. You can delete it any time."],
+    privDel:"Delete my data from this phone", privDone:"Data deleted.",
+    byDept:"By department"
+  }
+};
+
+// Routing: weighted keywords. Prototype only; the full version uses an LLM.
+const KEYS = {
+  street:{"street light":3,"streetlight":3,"light":2,"lamp":2,"electric":2,"power":2,"transformer":2,"pole":1,"बिजली":2,"लाइट":2,"स्ट्रीट":3,"खंभा":1,"खम्भा":1,"ट्रांसफार्मर":2},
+  water:{"water":3,"tap":2,"pipe":2,"supply":1,"पानी":3,"पेयजल":3,"नल":2,"पाइप":2},
+  roads:{"road":3,"pothole":3,"bridge":2,"path":1,"सड़क":3,"गड्ढ":3,"रास्ता":2,"रास्ते":2,"पुल":1},
+  waste:{"garbage":3,"waste":2,"drain":3,"sewer":3,"dustbin":2,"clean":1,"कूड़ा":3,"कचरा":3,"नाली":3,"सफाई":2,"सफ़ाई":2,"गंदगी":2}
+};
+const DUR_RE=/(\d+|one|two|three|four|five|six|seven|एक|दो|तीन|चार|पाँच|पांच|छह|सात)\s*(days?|weeks?|months?|दिन|हफ्ते|हफ़्ते|सप्ताह|महीने|महीना)/i;
+const URGENT_RE=/(accident|danger|fire|spark|shock|flood|landslide|emergency|urgent|injur|खतरा|ख़तरा|आग|चिंगारी|करंट|बाढ़|भूस्खलन|दुर्घटना|हादसा|घायल|तुरंत)/i;
+const DUR2=/(since today|since this week|over a month|आज से|इस हफ्ते से|एक महीने से ज़्यादा)/i;
+const LOC_RE=/(village|gaon|ward|mohalla|lane|colony|nagar|tehsil|block|market|school|near|गाँव|गांव|मोहल्ला|वार्ड|गली|कॉलोनी|नगर|तहसील|ब्लॉक|बाज़ार|बाजार|स्कूल|पास)/i;
+const DUP={street:12,water:7,roads:9,waste:5,other:0};
+const SAMPLES=[
+  {ref:"CM-100231",p:{hi:"चार दिन से पानी नहीं आ रहा",en:"No drinking water for four days"},dept:"water",stage:1,urgent:false,dup:7,located:true,photo:false},
+  {ref:"CM-100232",p:{hi:"स्कूल के पास बड़ा गड्ढा, हादसे का खतरा",en:"Large pothole near the school, accident risk"},dept:"roads",stage:0,urgent:true,dup:9,located:true,photo:true}
+];
+const SAMPLE = { hi:"गली की स्ट्रीट लाइट तीन हफ्ते से खराब है", en:"The street light on our lane has not worked for three weeks" };
+
+function analyze(text){
+  const t=(text||"").toLowerCase(), scores={}, hits={};
+  for(const [k,ws] of Object.entries(KEYS)){
+    let s=0; const h=[];
+    for(const [w,wt] of Object.entries(ws)) if(t.includes(w)){ s+=wt; h.push(w); }
+    scores[k]=s; hits[k]=h;
+  }
+  const r=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const [top,ts]=r[0], ss=r[1][1];
+  let conf = ts>=4?"high":ts>=2?"med":"low";
+  if(ts>0 && ss>0 && ts-ss<=1) conf="low";
+  const d=t.match(DUR_RE)||t.match(DUR2);
+  return {dept:ts>0?top:"other", conf, hits:ts>0?hits[top]:[], dur:d?d[0]:"", urgent:URGENT_RE.test(t)};
+}
+
+const DRAFT="sahayak_draft", QUEUE="sahayak_queue", CASES="sahayak_complaints", PREFS="sahayak_prefs";
+const store={
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+let lang="hi", located=false, photoName="", curRef="", rec=null, forced=false, svcPick="", last="s1";
+const online=()=>!forced && navigator.onLine!==false;
+const cases=()=>store.get(CASES)||[];
+const current=()=>cases().find(c=>c.ref===curRef);
+
+function applyLang(l){
+  lang=l; document.documentElement.lang=l;
+  $("lang-hi").setAttribute("aria-pressed",l==="hi"); $("lang-en").setAttribute("aria-pressed",l==="en");
+  document.querySelectorAll("[data-i18n]").forEach(e=>e.textContent=T[l][e.dataset.i18n]);
+  $("problem").placeholder = l==="hi" ? "जैसे: हमारी गली में पानी नहीं आ रहा" : "For example: there is no water in our lane";
+  const cur=$("dept").value; fillDepts(cur||analyze($("problem2").value||$("problem").value).dept);
+  if(located) $("locOk").textContent=T[l].locDone;
+  renderPhoto();
+  if(!$("s3").hidden) renderTrack();
+  renderMy(); renderPriv();
+  if(!$("s5").hidden) renderOfficer();
+  renderOpts(); renderUnderstood(); renderDup(); updateNet();
+  if($("draft").textContent) $("draft").textContent=T[l].draftSaved;
+  $("size").setAttribute("aria-label", l==="hi"?"बड़े अक्षर":"Larger text");
+}
+function fillDepts(sel){
+  $("dept").innerHTML=Object.entries(T[lang].depts).map(([k,v])=>`<option value="${k}"${k===sel?" selected":""}>${v}</option>`).join("");
+}
+function show(id){
+  ["s1","s2","s3","s4","s5","s6","s7"].forEach(s=>$(s).hidden=(s!==id));
+  if(!["s4","s5","s6","s7"].includes(id)) last=id;
+  window.scrollTo(0,0);
+}
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,3500); }
+
+// accessibility preferences
+const SIZES=[18,21,24];
+let prefs=Object.assign({size:0,hc:false},store.get(PREFS)||{});
+function applyPrefs(){
+  document.documentElement.style.fontSize=SIZES[prefs.size]+"px";
+  document.body.classList.toggle("hc",prefs.hc); $("hc").setAttribute("aria-pressed",prefs.hc);
+  $("size").textContent=["A+","A++","A"][prefs.size];
+  store.set(PREFS,prefs);
+}
+$("size").addEventListener("click",()=>{ prefs.size=(prefs.size+1)%SIZES.length; applyPrefs(); });
+$("hc").addEventListener("click",()=>{ prefs.hc=!prefs.hc; applyPrefs(); });
+
+// voice input
+const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+$("mic").addEventListener("click",()=>{
+  if(!SR){ $("status").textContent=T[lang].noVoice; $("problem").focus(); return; }
+  if(rec){ rec.stop(); return; }
+  rec=new SR(); rec.lang= lang==="hi" ? "hi-IN" : "en-IN"; rec.interimResults=false;
+  rec.onstart=()=>{ $("mic").classList.add("on"); $("status").textContent=T[lang].listening; };
+  rec.onresult=e=>{ $("problem").value=e.results[0][0].transcript; $("status").textContent=T[lang].heard; update(); };
+  rec.onerror=()=>{ $("status").textContent=T[lang].voiceErr; };
+  rec.onend=()=>{ $("mic").classList.remove("on"); rec=null; };
+  rec.start();
+});
+
+// read aloud
+if("speechSynthesis" in window) $("speak").hidden=false;
+$("speak").addEventListener("click",()=>{
+  const t=T[lang], u=new SpeechSynthesisUtterance(`${$("problem2").value}. ${t.fDept}: ${t.depts[$("dept").value]}.`);
+  u.lang = lang==="hi" ? "hi-IN" : "en-IN"; speechSynthesis.cancel(); speechSynthesis.speak(u);
+});
+
+// drafts
+function update(){ $("go2").disabled=!$("problem").value.trim(); saveDraft(); }
+function saveDraft(){
+  const p=($("s2").hidden?$("problem"):$("problem2")).value.trim();
+  if(!p){ store.del(DRAFT); $("draft").textContent=""; return; }
+  store.set(DRAFT,{p,dept:$("dept").value,located,photoName});
+  $("draft").textContent=T[lang].draftSaved;
+}
+$("problem").addEventListener("input",update);
+$("problem2").addEventListener("input",()=>{ saveDraft(); renderUnderstood(); });
+$("dept").addEventListener("change",()=>{ saveDraft(); renderUnderstood(); renderDup(); });
+$("example").addEventListener("click",()=>{ $("problem").value=SAMPLE[lang]; update(); });
+
+$("go2").addEventListener("click",()=>{
+  const p=$("problem").value.trim(); $("problem2").value=p;
+  fillDepts(analyze(p).dept); renderUnderstood(); renderDup(); show("s2");
+});
+$("back1").addEventListener("click",()=>show("s1"));
+
+function renderUnderstood(){
+  const t=T[lang], a=analyze($("problem2").value), sel=$("dept").value, mine=sel===a.dept;
+  let h=`<p class="uh">${t.understood}</p><p><strong>${t.depts[sel]}</strong>`;
+  h+= mine ? ` <span class="badge ${a.conf}">${t.conf} ${t.confs[a.conf]}</span>` : ` <span class="badge">${t.byYou}</span>`;
+  h+=`</p>`;
+  if(mine && a.hits.length) h+=`<p class="why">${t.because} ${a.hits.map(esc).join(", ")}</p>`;
+  if(a.dur) h+=`<p>${t.dur} ${esc(a.dur)}</p>`;
+  if(a.urgent) h+=`<p class="urg">${t.urgent} ${t.urgentNote}</p>`;
+  $("understood").innerHTML=h;
+  renderAsk();
+}
+function renderAsk(){
+  const t=T[lang], txt=$("problem2").value, a=analyze(txt), box=$("ask"), items=[];
+  if(!located && !LOC_RE.test(txt)) items.push(`<p>${t.askLoc}</p><button class="chip" id="askLoc">${t.addLoc}</button>`);
+  if(!a.dur) items.push(`<p>${t.askWhen}</p><div class="chips">${t.whenOpts.map((o,i)=>`<button class="chip" data-w="${i}">${o}</button>`).join("")}</div>`);
+  if(!items.length){ box.hidden=true; box.innerHTML=""; return; }
+  box.hidden=false; box.innerHTML=`<p class="uh">${t.askTitle}</p>`+items.join("");
+  const al=$("askLoc"); if(al) al.addEventListener("click",()=>$("loc").click());
+  box.querySelectorAll("[data-w]").forEach(b=>b.addEventListener("click",()=>{
+    $("problem2").value=$("problem2").value.trim()+" ("+t.whenOpts[+b.dataset.w]+")"; saveDraft(); renderUnderstood();
+  }));
+}
+function renderDup(){
+  const n=DUP[$("dept").value]||0, box=$("dup");
+  if(located && n>0){ box.hidden=false; box.textContent=T[lang].dup(n); } else { box.hidden=true; }
+}
+
+$("loc").addEventListener("click",()=>{
+  const done=()=>{ located=true; $("locOk").textContent=T[lang].locDone; renderDup(); renderUnderstood(); saveDraft(); };
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(done,()=>{ done(); toast(T[lang].locSample); },{timeout:6000});
+  } else { done(); toast(T[lang].locSample); }
+});
+$("photoBtn").addEventListener("click",()=>$("photo").click());
+let photoSizes=null;
+const fmt=n=>n>1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round(n/1024))+" KB";
+function renderPhoto(){ $("photoOk").textContent = photoName ? photoName+(photoSizes?" · "+T[lang].photoSaved(fmt(photoSizes[0]),fmt(photoSizes[1])):"") : ""; }
+$("photo").addEventListener("change",async e=>{
+  const f=e.target.files[0]; photoName=f?f.name:""; photoSizes=null;
+  if(f){
+    try{
+      const bmp=await createImageBitmap(f), k=Math.min(1,1024/Math.max(bmp.width,bmp.height));
+      const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+      c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+      const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",.6));
+      if(blob) photoSizes=[f.size,Math.min(f.size,blob.size)];
+    }catch(err){}
+  }
+  renderPhoto(); saveDraft();
+});
+
+// submit, offline queue, send
+const newRef=()=>"CM-"+String(Math.floor(100000+Math.random()*900000));
+function makeCase(q){
+  const a=analyze(q.p);
+  return {ref:newRef(),p:q.p,dept:q.dept,located:q.located,photo:!!q.photoName,stage:0,urgent:a.urgent,dup:q.located?(DUP[q.dept]||0):0};
+}
+$("submit").addEventListener("click",()=>{
+  store.del(DRAFT); $("draft").textContent="";
+  const q={p:$("problem2").value.trim(),dept:$("dept").value,located,photoName};
+  if(online()){ const c=makeCase(q); store.set(CASES,[c,...cases()]); curRef=c.ref; }
+  else { store.set(QUEUE,q); curRef=""; }
+  show("s3"); renderTrack();
+});
+function flushQueue(){
+  const q=store.get(QUEUE); if(!q) return;
+  store.del(QUEUE); const c=makeCase(q); store.set(CASES,[c,...cases()]); curRef=c.ref;
+  toast(T[lang].sentToast);
+  if(!$("s3").hidden) renderTrack();
+}
+function updateNet(){
+  const off=!online();
+  $("net").hidden=!off; $("net").textContent=off?T[lang].netOff:"";
+  $("sim").textContent=forced?T[lang].simOff:T[lang].simOn;
+  if(!off) flushQueue();
+}
+$("sim").addEventListener("click",()=>{ forced=!forced; updateNet(); });
+window.addEventListener("online",updateNet); window.addEventListener("offline",updateNet);
+
+function advance(ref){
+  const all=cases(), c=all.find(x=>x.ref===ref); if(!c || c.stage>=T[lang].stages.length-1) return;
+  c.stage++; store.set(CASES,all);
+  toast(T[lang].sms(ref,T[lang].stages[c.stage]));
+}
+function renderTrack(){
+  const t=T[lang], c=current(), pend=!c && !!store.get(QUEUE);
+  const stage=c?c.stage:-1, last_=t.stages.length-1;
+  $("ref").textContent=c?c.ref:"";
+  $("h3").textContent=pend?t.pendingH:t.h3;
+  $("refLine").hidden=pend; $("pend").hidden=!pend; $("pend").textContent=pend?t.pendingLead:"";
+  const p=c?c.p:(store.get(QUEUE)||{}).p||$("problem2").value, d=c?c.dept:(store.get(QUEUE)||{}).dept||$("dept").value;
+  const loc=c?c.located:located, ph=c?c.photo:!!photoName;
+  $("summary").innerHTML=`<p><strong>${esc(p)}</strong></p><p>${t.depts[d]}</p><p>${t.sLoc}: ${loc?t.yes:t.no} · ${t.sPhoto}: ${ph?t.yes:t.no}</p>`;
+  $("timeline").innerHTML=(pend?`<li class="now">${t.waiting}</li>`:"")+t.stages.map((s,i)=>`<li class="${pend?"":i<stage?"done":i===stage?"now":""}">${s}</li>`).join("");
+  $("next").disabled = pend || stage>=last;
+  $("next").textContent = stage>=last ? t.resolved : t.next;
+  const wa=$("wa"); wa.hidden=pend||!c;
+  if(c){ wa.textContent=t.shareWa; wa.href="https://wa.me/?text="+encodeURIComponent(t.waMsg(c.ref,t.stages[stage])); }
+  $("alertBox").hidden=pend||!c;
+  if(c){ $("alertCh").textContent="WhatsApp / SMS"; $("alertMsg").textContent=t.alertMsg(c.ref,t.stages[stage]); }
+}
+$("next").addEventListener("click",()=>{ if(curRef){ advance(curRef); renderTrack(); } });
+$("again").addEventListener("click",()=>{
+  $("problem").value=""; $("problem2").value=""; located=false; photoName=""; photoSizes=null; $("locOk").textContent=""; $("photoOk").textContent=""; $("photo").value="";
+  $("status").textContent=""; store.del(DRAFT); $("draft").textContent=""; curRef=""; renderDup(); update(); show("s1");
+});
+
+// which service do I need?
+const SERVICE_KEYS=["cert","land","pension","licence"];
+function renderOpts(){
+  const t=T[lang];
+  $("opts").innerHTML=Object.entries(t.opts).map(([k,v])=>`<button class="opt" data-k="${k}" aria-pressed="${k===svcPick}">${v}</button>`).join("");
+  $("opts").querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>{ svcPick=b.dataset.k; renderOpts(); }));
+  const t2=T[lang], box=$("svcResult");
+  if(!svcPick){ box.hidden=true; return; }
+  box.hidden=false;
+  box.innerHTML = SERVICE_KEYS.includes(svcPick)
+    ? `<p>${t2.svc}</p><a class="btn" href="https://eservices.uk.gov.in/" target="_blank" rel="noopener">${t2.openSvc}</a>`
+    : `<p>${t2.cmpl}</p><button class="btn" id="fileNow">${t2.fileNow}</button>`;
+  const f=$("fileNow"); if(f) f.addEventListener("click",()=>show("s1"));
+}
+$("helper").addEventListener("click",()=>{ svcPick=""; renderOpts(); show("s4"); });
+$("back4").addEventListener("click",()=>show(last));
+
+// officer view (demo)
+function renderOfficer(){
+  const t=T[lang], mine=cases();
+  const rows=[...mine.map(c=>({...c,real:true})), ...SAMPLES.map(c=>({...c,p:c.p[lang],real:false}))];
+  $("officerSum").textContent=(mine.length?"":t.noneYet+" ")+t.sum(rows.length,rows.filter(r=>r.urgent).length);
+  const counts=Object.keys(t.depts).map(k=>[k,rows.filter(r=>r.dept===k).length]), mx=Math.max(1,...counts.map(c=>c[1]));
+  $("deptBars").innerHTML=`<p class="hint">${t.byDept}</p>`+counts.map(([k,n])=>`<div class="drow"><span>${t.depts[k]}</span><div class="dbar"><i style="width:${n/mx*100}%"></i></div><b>${n}</b></div>`).join("");
+  $("officerList").innerHTML=rows.map(r=>{
+    const fl=[];
+    if(r.urgent) fl.push(`<span class="flag u">${t.flagUrgent}</span>`);
+    if(r.dup) fl.push(`<span class="flag">${t.flagDup(r.dup)}</span>`);
+    if(r.photo) fl.push(`<span class="flag">${t.flagPhoto}</span>`);
+    if(r.located) fl.push(`<span class="flag">${t.flagGps}</span>`);
+    const fin=r.stage>=t.stages.length-1;
+    return `<div class="oc"><div class="top"><strong>${r.ref}</strong><span>${r.real?"":t.sample+" · "}${t.stages[r.stage]}</span></div>
+      <p>${esc(r.p)}</p><div class="flags"><span class="flag">${t.depts[r.dept]}</span>${fl.join("")}</div>
+      ${r.real?`<button class="btn" data-ref="${r.ref}" ${fin?"disabled":""}>${fin?t.finished:t.advance}</button>`:""}</div>`;
+  }).join("");
+  $("officerList").querySelectorAll("button[data-ref]").forEach(b=>b.addEventListener("click",()=>{ advance(b.dataset.ref); renderOfficer(); }));
+}
+$("offBtn").addEventListener("click",()=>{ renderOfficer(); show("s5"); });
+$("back5").addEventListener("click",()=>{ show(last); if(last==="s3") renderTrack(); });
+
+// track a complaint
+function renderMy(){
+  const t=T[lang], list=cases();
+  $("myList").innerHTML = list.length ? list.map(c=>`<button class="opt" data-ref="${c.ref}"><strong>${c.ref}</strong> · ${t.stages[c.stage]}<br>${esc(c.p)}</button>`).join("") : `<p class="hint">${t.noMine}</p>`;
+  $("myList").querySelectorAll("[data-ref]").forEach(b=>b.addEventListener("click",()=>{ curRef=b.dataset.ref; show("s3"); renderTrack(); }));
+}
+$("trackBtn").addEventListener("click",()=>{ $("trackMsg").textContent=""; renderMy(); show("s6"); });
+$("trackGo").addEventListener("click",()=>{
+  const v=$("trackIn").value.trim().toUpperCase(), c=cases().find(x=>x.ref===v);
+  if(c){ curRef=c.ref; show("s3"); renderTrack(); } else $("trackMsg").textContent=T[lang].notFound;
+});
+$("back6").addEventListener("click",()=>show(last));
+
+// privacy
+function renderPriv(){ $("privList").innerHTML=T[lang].privLines.map(x=>`<p>${x}</p>`).join(""); }
+$("privBtn").addEventListener("click",()=>{ $("privMsg").textContent=""; renderPriv(); show("s7"); });
+$("back7").addEventListener("click",()=>show(last));
+$("privDel").addEventListener("click",()=>{
+  store.del(DRAFT); store.del(QUEUE); store.del(CASES); curRef="";
+  $("problem").value=""; $("problem2").value=""; located=false; photoName=""; photoSizes=null; $("locOk").textContent=""; $("photoOk").textContent=""; $("draft").textContent="";
+  update(); renderDup(); renderMy(); $("privMsg").textContent=T[lang].privDone;
+});
+
+$("lang-hi").addEventListener("click",()=>applyLang("hi"));
+$("lang-en").addEventListener("click",()=>applyLang("en"));
+applyPrefs(); applyLang("hi");
+(function restore(){
+  const q=store.get(QUEUE), d=store.get(DRAFT);
+  if(q){
+    $("problem2").value=q.p; $("problem").value=q.p; located=q.located; photoName=q.photoName;
+    fillDepts(q.dept); show("s3"); applyLang(lang); updateNet(); renderTrack();
+  } else if(d){
+    $("problem").value=d.p; $("problem2").value=d.p; located=d.located; photoName=d.photoName;
+    fillDepts(d.dept); update(); applyLang(lang); toast(T[lang].draftBack);
+  }
+})();
+if("serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
